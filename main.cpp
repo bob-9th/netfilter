@@ -34,13 +34,6 @@ bool isBadHost(string &host) {
     }
 }
 
-/* returns packet id */
-static u_int32_t print_pkt (struct nfq_data *tb)
-{
-
-}
-
-
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
               struct nfq_data *tb, void *Vdata)
 {
@@ -60,11 +53,11 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
             string host = str.substr(host_pos + string("Host: ").size(), str.find("\n", host_pos) - host_pos - string("Host: ").size() - 1);
 
             //algorithm:
-            //we should exclude linear search because of O(N)
-            //we can think about binary search(using vector or set) and map
-            //Binary search has O(lgN) complexity.
-            //map's time complexity follows its hash algorithm and it is immutable.
-            //Nevertheless, map's average time complexity is better than linear search.
+            //we should exclude linear search because time complexity is O(N)
+            //we can think about binary search(using vector or set in C++ STL) and map
+            //Binary search has O(log N) complexity.
+            //map's time complexity follows its hash algorithm and it is mutable.
+            //Nevertheless, the map's average time complexity is better than the linear search.
 
             if (isBadHost(host)) status = NF_DROP;
         }
