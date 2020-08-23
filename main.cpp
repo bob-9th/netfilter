@@ -17,22 +17,7 @@
 
 using namespace std;
 
-unordered_map<string, bool> hosts_mp;
-vector<string> hosts;
-
-const bool useBinarySearch = true;
-
-bool isBadHost(string &host) {
-    if (useBinarySearch) {
-        auto it = lower_bound(hosts.begin(), hosts.end(), host);
-        if (it < hosts.end() && *it == host) { //if *it isn't equal host, host will not exist in banned-hosts.
-            return true;
-        }
-        return false;
-    }else{
-        return hosts_mp[host]; //unordered_map case
-    }
-}
+string ban_host;
 
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
               struct nfq_data *tb, void *Vdata)
@@ -59,7 +44,7 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
             //map's time complexity follows its hash algorithm and it is mutable.
             //Nevertheless, the map's average time complexity is better than the linear search.
 
-            if (isBadHost(host)) status = NF_DROP;
+            if (ban_host == host) status = NF_DROP;
         }
     }
 
@@ -74,30 +59,14 @@ int main(int argc, char **argv)
     int fd;
     int rv;
     char buf[4096] __attribute__ ((aligned));
-
-    FILE *f = fopen("host.txt", "r");
-    if (f != NULL) {
-        string host;
-        char buf;
-        while ((buf = fgetc(f)) != EOF) {
-            if (buf == '\n' && !host.empty()) {
-                hosts_mp[host] = true;
-                hosts.push_back(host);
-
-                host.clear();
-            }else host.push_back(buf);
-        }
-
-        if (!host.empty()) {
-            hosts_mp[host] = true;
-            hosts.push_back(host);
-        }
-
-        sort(hosts.begin(), hosts.end()); //For binary search, vector must be sorted.
-
-        fclose(f);
-    }
-
+	
+	if (argc != 2) {
+		cout << "Usage: ./netfilter <host>\n";
+		return 0;
+	}
+	
+	ban_host = string(argv[1]);
+	
     printf("opening library handle\n");
     h = nfq_open();
     if (!h) {
